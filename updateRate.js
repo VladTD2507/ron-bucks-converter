@@ -17,51 +17,54 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-let currentRate = 1488; // Начальный курс, если в базе данных пусто
+let currentRate = 1488; // Начальный курс
+let rateLoaded = false; // Флаг что курс загружен
 
-// Получаем текущий курс из Firebase
 const rateRef = ref(db, 'rate');
 
-// Проверяем, если курс уже установлен в базе данных
+// Загружаем текущий курс из базы
 get(rateRef).then((snapshot) => {
   if (snapshot.exists()) {
-    currentRate = snapshot.val(); // Берем курс из базы данных
-    console.log(`Курс загружен: 1 Рон-бакс = ${currentRate} долларов`);
+    currentRate = snapshot.val();
+    console.log(`Курс загружен: ${currentRate}`);
   } else {
-    // Если курса нет в базе, устанавливаем начальный курс
     set(rateRef, currentRate);
-    console.log(`Курс установлен на начальный: 1 Рон-бакс = ${currentRate} долларов`);
+    console.log(`Установлен начальный курс: ${currentRate}`);
   }
+  rateLoaded = true; // Теперь можно менять курс
 });
 
-// Функция для плавного изменения курса
+// Функция обновления курса
 function updateRate() {
-  const increaseChance = Math.random(); // случайное число от 0 до 1
+  if (!rateLoaded) {
+    console.log('Курс ещё не загружен. Пропуск обновления.');
+    return;
+  }
 
-  const maxChange = currentRate * 0.15; // максимум 15% от текущего курса
+  const increaseChance = Math.random();
+  const maxChange = currentRate * 0.15;
   const changeAmount = Math.floor(Math.random() * maxChange);
 
   if (increaseChance < 0.7) {
-    // 70% шанс поднятия курса
     currentRate += changeAmount;
   } else {
-    // 30% шанс падения курса
     currentRate -= changeAmount;
   }
 
-  if (currentRate < 100) currentRate = 100; // Минимальный курс
-  if (currentRate > 100000) currentRate = 100000; // Максимальный курс
+  if (currentRate < 100) currentRate = 100;
+  if (currentRate > 100000) currentRate = 100000;
 
-  const rateRef = ref(db, 'rate');
-  set(rateRef, currentRate); // Сохраняем новый курс в Firebase
+  set(rateRef, currentRate);
 
   console.log(`Новый курс установлен: ${currentRate}`);
 }
 
-
-// Используем setTimeout для обновления курса только через 1 минуту после загрузки страницы
+// Стартуем обновление курса только после загрузки
 setTimeout(() => {
-  updateRate(); // Обновляем курс после 1 минуты
-  // Затем продолжаем обновлять курс каждые 60 секунд (1 минута)
-  setInterval(updateRate, 60000); // 60000 мс = 1 минута
-}, 60000); // Первый запуск через 1 минуту
+  if (rateLoaded) {
+    updateRate();
+    setInterval(updateRate, 60000); // Каждую минуту
+  } else {
+    console.log('Курс ещё не загружен. Ждём.');
+  }
+}, 60000);
