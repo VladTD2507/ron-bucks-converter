@@ -19,70 +19,73 @@ const db = getDatabase(app);
 
 let currentRate = 1488; // Стартовый курс
 
-// Получаем курс из базы данных
+// Ссылка на курс в базе данных
 const rateRef = ref(db, 'rate');
 
+// Загружаем курс из базы
 get(rateRef).then((snapshot) => {
   if (snapshot.exists()) {
     currentRate = snapshot.val();
     console.log(`[${new Date().toLocaleTimeString()}] Курс загружен: ${currentRate}`);
-    updateRateDisplay(currentRate, currentRate); // сразу обновляем на странице
+    updateRateDisplay(currentRate, currentRate); // сразу показать курс
   } else {
     set(rateRef, currentRate);
     console.log(`[${new Date().toLocaleTimeString()}] Курс установлен стартовый: ${currentRate}`);
-    updateRateDisplay(currentRate, currentRate);
+    updateRateDisplay(currentRate, currentRate); // сразу показать курс
   }
 });
 
-// Обновление курса на странице
+// Функция для обновления отображения курса
 function updateRateDisplay(newRate, oldRate) {
   const rateElement = document.getElementById('rate');
   rateElement.innerText = `Текущий курс: 1 Рон-бакс = ${newRate} долларов`;
 
-  // Цвет текста
   if (newRate > oldRate) {
     rateElement.style.color = "green"; // курс вырос
   } else if (newRate < oldRate) {
     rateElement.style.color = "red"; // курс упал
   } else {
-    rateElement.style.color = "black"; // без изменений
+    rateElement.style.color = "black"; // курс не изменился
   }
+
+  // Анимация изменения курса
+  rateElement.style.transition = 'transform 0.3s ease';
+  rateElement.style.transform = 'scale(1.05)';
+  setTimeout(() => {
+    rateElement.style.transform = 'scale(1)';
+  }, 300);
 }
 
-// Обновляем курс
+// Логика плавного изменения курса
 function updateRate() {
   const oldRate = currentRate;
-  const chance = Math.random();
+  const chance = Math.random(); // шанс изменения
 
   if (chance < 0.9) {
-    // 90% шанс чуть-чуть увеличить курс
-    const increasePercent = 0.0005 + Math.random() * 0.0015; // от 0.05% до 0.2%
-    const increaseAmount = Math.floor(currentRate * increasePercent);
+    // 90% шанс увеличения на 1–5
+    const increaseAmount = Math.floor(Math.random() * 5) + 1; // от 1 до 5
     currentRate += increaseAmount;
     console.log(`[${new Date().toLocaleTimeString()}] Курс увеличился на +${increaseAmount} → ${currentRate}`);
   } else {
-    // 10% шанс слегка уменьшить курс
-    const decreasePercent = 0.0005; // фиксированное уменьшение 0.05%
-    const decreaseAmount = Math.floor(currentRate * decreasePercent);
+    // 10% шанс уменьшения на 1–2
+    const decreaseAmount = Math.floor(Math.random() * 2) + 1; // от 1 до 2
     currentRate -= decreaseAmount;
     console.log(`[${new Date().toLocaleTimeString()}] Курс уменьшился на -${decreaseAmount} → ${currentRate}`);
   }
 
-  // Ограничения
+  // Ограничения курса
   if (currentRate < 100) currentRate = 100;
   if (currentRate > 100000) currentRate = 100000;
 
-  // Сохраняем в Firebase
+  // Обновляем базу и экран
   set(rateRef, currentRate);
-
-  // Обновляем текст на странице
   updateRateDisplay(currentRate, oldRate);
 }
 
-// Запускаем обновление курса каждые 10 секунд
+// Обновляем курс каждые 10 секунд
 setInterval(updateRate, 10000);
 
-// Конвертация Рон-баксов в доллары
+// Функция конвертации Рон-баксов в доллары
 window.convert = function convert() {
   const ronbucks = document.getElementById('ronbucks').value;
   if (ronbucks && currentRate) {
@@ -90,5 +93,16 @@ window.convert = function convert() {
     document.getElementById('result').innerText = `${ronbucks} Рон-баксов = ${dollars.toLocaleString()} долларов`;
   } else {
     document.getElementById('result').innerText = 'Введите количество Рон-баксов!';
+  }
+};
+
+// Функция конвертации долларов в Рон-баксы
+window.convertBack = function convertBack() {
+  const dollars = document.getElementById('dollars').value;
+  if (dollars && currentRate) {
+    const ronbucks = dollars / currentRate;
+    document.getElementById('resultBack').innerText = `${dollars} долларов = ${ronbucks.toFixed(4)} Рон-баксов`;
+  } else {
+    document.getElementById('resultBack').innerText = 'Введите количество долларов!';
   }
 };
