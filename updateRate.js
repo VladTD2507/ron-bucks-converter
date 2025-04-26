@@ -77,7 +77,7 @@ function updateRate() {
 }
 
 // Запускаем обновление курса каждые 10 секунд
-setInterval(updateRate, 10000); // каждые 10 секунд
+setInterval(updateRate, 60000); // каждые 10 секунд
 
 // Конвертация
 window.convert = function convert() {
