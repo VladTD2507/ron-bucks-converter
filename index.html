@@ -23,12 +23,6 @@
       font-size: 22px;
       margin-top: 20px;
     }
-    .up {
-      color: green;
-    }
-    .down {
-      color: red;
-    }
   </style>
 </head>
 <body>
@@ -64,36 +58,12 @@
     const db = getDatabase(app);
 
     let currentRate = 0; // сюда будет сохраняться курс
-    let lastRate = 0; // для отслеживания изменения курса
 
     // Слушаем изменения курса в реальном времени
     const rateRef = ref(db, 'rate');
     onValue(rateRef, (snapshot) => {
       currentRate = snapshot.val();
-      
-      // Выводим текущий курс
-      const rateText = document.getElementById('rate');
-      rateText.innerText = `Текущий курс: 1 Рон-бакс = ${currentRate} долларов`;
-
-      // Удаляем старую стрелку, если она есть
-      const existingArrow = rateText.querySelector('span');
-      if (existingArrow) {
-        rateText.removeChild(existingArrow);
-      }
-
-      // Добавляем стрелку вверх или вниз в зависимости от изменения курса
-      const rateArrow = document.createElement('span');
-      if (currentRate > lastRate) {
-        rateArrow.innerHTML = ' ↑';
-        rateArrow.className = 'up';
-      } else if (currentRate < lastRate) {
-        rateArrow.innerHTML = ' ↓';
-        rateArrow.className = 'down';
-      }
-      rateText.appendChild(rateArrow);
-
-      // Обновляем lastRate для следующего сравнения
-      lastRate = currentRate;
+      document.getElementById('rate').innerText = `Текущий курс: 1 Рон-бакс = ${currentRate} долларов`;
     });
 
     // Функция конвертации
