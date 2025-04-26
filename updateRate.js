@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
-import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-database.js";
+import { getDatabase, ref, set, onValue, get } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-database.js";
 
 // Твои настройки Firebase
 const firebaseConfig = {
@@ -19,10 +19,17 @@ const db = getDatabase(app);
 
 let currentRate = 1488; // Начальный курс, если в базе данных пусто
 
-// Слушаем изменения курса в Firebase
+// Получаем текущий курс из Firebase
 const rateRef = ref(db, 'rate');
-onValue(rateRef, (snapshot) => {
-  currentRate = snapshot.val() || currentRate; // если курса нет в базе, используем текущий курс
+
+// Проверка, если курс уже установлен
+get(rateRef).then((snapshot) => {
+  if (snapshot.exists()) {
+    currentRate = snapshot.val(); // Если курс уже есть, берем его
+  } else {
+    // Если курса нет в базе данных, устанавливаем начальный
+    set(rateRef, currentRate);
+  }
   console.log(`Текущий курс: 1 Рон-бакс = ${currentRate} долларов`);
 });
 
@@ -39,9 +46,6 @@ function updateRate() {
 
   console.log(`Новый курс установлен: ${currentRate}`);
 }
-
-// Сразу обновляем курс при старте
-updateRate();
 
 // Обновляем курс каждые 60 секунд
 setInterval(updateRate, 60000); // 60000 мс = 1 минута
