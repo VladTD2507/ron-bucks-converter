@@ -19,38 +19,78 @@
       font-size: 20px;
       font-weight: bold;
     }
+    #course {
+      font-size: 24px;
+      margin-bottom: 20px;
+      transition: color 0.5s;
+    }
+    #history {
+      margin-top: 30px;
+      font-size: 18px;
+    }
+    canvas {
+      margin-top: 20px;
+    }
   </style>
 </head>
 <body>
 
   <h1>Конвертер Рон-Баксов в Доллары</h1>
 
-  <div id="course"></div>
+  <div id="course">Загрузка курса...</div>
 
   <input type="number" id="ronInput" placeholder="Введите количество Рон-Баксов">
   <button onclick="convert()">Конвертировать</button>
 
   <div class="result" id="result"></div>
 
+  <div id="history">
+    История курса:
+    <ul id="historyList"></ul>
+    <canvas id="historyChart" width="400" height="200"></canvas>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
-    function getCurrentRate() {
-      const now = new Date();
-      const minutes = now.getUTCMinutes();
-      const hours = now.getUTCHours();
-      const day = now.getUTCDate();
-      const seed = minutes + hours * 60 + day * 24 * 60;
+    let rate = generateInitialRate();
+    let previousRate = rate;
+    let rateHistory = [rate];
 
-      // Создаем псевдослучайное число от 0 до 1
-      const randomValue = Math.abs(Math.sin(seed)) % 1;
-
-      // Масштабируем в диапазон от 100 до 100000
-      const rate = Math.floor(100 + randomValue * (100000 - 100));
-
-      return rate;
+    function generateInitialRate() {
+      return Math.floor(Math.random() * (100000 - 100) + 100);
     }
 
-    let rate = getCurrentRate();
-    document.getElementById('course').innerText = `Текущий курс: 1 Рон-Бакс = ${rate} USD`;
+    function updateRate() {
+      const changePercent = (Math.random() * 10 - 5); // от -5% до +5%
+      const changeAmount = rate * (changePercent / 100);
+      previousRate = rate;
+      rate += changeAmount;
+
+      // Ограничиваем в пределах 100 - 100000
+      if (rate < 100) rate = 100;
+      if (rate > 100000) rate = 100000;
+
+      rate = Math.floor(rate);
+
+      // Обновляем историю
+      rateHistory.push(rate);
+      if (rateHistory.length > 5) { // только последние 5 записей
+        rateHistory.shift();
+      }
+    }
+
+    function showRate() {
+      const courseElement = document.getElementById('course');
+      courseElement.innerText = `Текущий курс: 1 Рон-Бакс = ${rate} USD`;
+
+      if (rate > previousRate) {
+        courseElement.style.color = "green"; // вырос
+      } else if (rate < previousRate) {
+        courseElement.style.color = "red"; // упал
+      } else {
+        courseElement.style.color = "black"; // без изменений
+      }
+    }
 
     function convert() {
       const ronAmount = document.getElementById('ronInput').value;
@@ -62,12 +102,61 @@
       document.getElementById('result').innerText = `${ronAmount} Рон-Баксов = ${dollars.toLocaleString()} USD`;
     }
 
-    // Обновляем курс каждую минуту
-    setInterval(() => {
-      rate = getCurrentRate();
-      document.getElementById('course').innerText = `Текущий курс: 1 Рон-Бакс = ${rate} USD`;
-      document.getElementById('result').innerText = ""; // Очищаем результат после смены курса
-    }, 60000); // 60 000 мс = 1 минута
+    function updateHistoryList() {
+      const historyList = document.getElementById('historyList');
+      historyList.innerHTML = "";
+
+      rateHistory.forEach((r, index) => {
+        const li = document.createElement('li');
+        li.innerText = `${index + 1} мин назад: ${r} USD`;
+        historyList.appendChild(li);
+      });
+    }
+
+    function updateChart() {
+      const ctx = document.getElementById('historyChart').getContext('2d');
+      if (window.historyChart) {
+        window.historyChart.destroy();
+      }
+      window.historyChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: ["-4 мин", "-3 мин", "-2 мин", "-1 мин", "Сейчас"],
+          datasets: [{
+            label: 'Курс',
+            data: rateHistory,
+            borderColor: 'blue',
+            backgroundColor: 'lightblue',
+            fill: true,
+            tension: 0.4
+          }]
+        },
+        options: {
+          responsive: false,
+          scales: {
+            y: {
+              beginAtZero: false
+            }
+          }
+        }
+      });
+    }
+
+    function fullUpdate() {
+      updateRate();
+      showRate();
+      updateHistoryList();
+      updateChart();
+      document.getElementById('result').innerText = "";
+    }
+
+    // При первой загрузке
+    showRate();
+    updateHistoryList();
+    updateChart();
+
+    // Обновляем каждую минуту
+    setInterval(fullUpdate, 60000); // 60 секунд
   </script>
 
 </body>
