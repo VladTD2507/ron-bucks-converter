@@ -2,33 +2,25 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>Курс Рон-Баксов</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Конвертер Рон-Баксов</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       text-align: center;
-      margin-top: 50px;
+      padding: 20px;
     }
     input, button {
       padding: 10px;
       margin: 10px;
-      font-size: 16px;
-    }
-    .result {
-      margin-top: 20px;
-      font-size: 20px;
-      font-weight: bold;
-    }
-    #course {
-      font-size: 24px;
-      margin-bottom: 20px;
-      transition: color 0.5s;
-    }
-    #history {
-      margin-top: 30px;
       font-size: 18px;
     }
-    canvas {
+    #rate {
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+    #result {
+      font-size: 22px;
       margin-top: 20px;
     }
   </style>
@@ -37,126 +29,53 @@
 
   <h1>Конвертер Рон-Баксов в Доллары</h1>
 
-  <div id="course">Загрузка курса...</div>
+  <div id="rate">Текущий курс: загружается...</div>
 
-  <input type="number" id="ronInput" placeholder="Введите количество Рон-Баксов">
+  <input type="number" id="ronbucks" placeholder="Введите количество Рон-баксов">
   <button onclick="convert()">Конвертировать</button>
 
-  <div class="result" id="result"></div>
+  <div id="result"></div>
 
-  <div id="history">
-    История курса:
-    <ul id="historyList"></ul>
-    <canvas id="historyChart" width="400" height="200"></canvas>
-  </div>
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-database.js";
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script>
-    let rate = generateInitialRate();
-    let previousRate = rate;
-    let rateHistory = [rate];
+    // Твои настройки Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyCpjGgyQu_0YeK8bp93MwurF8na4WuSg-E",
+      authDomain: "ron-bucks-converter.firebaseapp.com",
+      databaseURL: "https://ron-bucks-converter-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "ron-bucks-converter",
+      storageBucket: "ron-bucks-converter.firebasestorage.app",
+      messagingSenderId: "833359153928",
+      appId: "1:833359153928:web:ca68420138bdd556453abd",
+      measurementId: "G-2MBE7ELRLC"
+    };
 
-    function generateInitialRate() {
-      return Math.floor(Math.random() * (100000 - 100) + 100);
-    }
+    // Инициализация Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
 
-    function updateRate() {
-      const changePercent = (Math.random() * 10 - 5); // от -5% до +5%
-      const changeAmount = rate * (changePercent / 100);
-      previousRate = rate;
-      rate += changeAmount;
+    let currentRate = 0; // сюда будет сохраняться курс
 
-      // Ограничиваем в пределах 100 - 100000
-      if (rate < 100) rate = 100;
-      if (rate > 100000) rate = 100000;
+    // Слушаем изменения курса в реальном времени
+    const rateRef = ref(db, 'rate');
+    onValue(rateRef, (snapshot) => {
+      currentRate = snapshot.val();
+      document.getElementById('rate').innerText = `Текущий курс: 1 Рон-бакс = ${currentRate} долларов`;
+    });
 
-      rate = Math.floor(rate);
-
-      // Обновляем историю
-      rateHistory.push(rate);
-      if (rateHistory.length > 5) { // только последние 5 записей
-        rateHistory.shift();
-      }
-    }
-
-    function showRate() {
-      const courseElement = document.getElementById('course');
-      courseElement.innerText = `Текущий курс: 1 Рон-Бакс = ${rate} USD`;
-
-      if (rate > previousRate) {
-        courseElement.style.color = "green"; // вырос
-      } else if (rate < previousRate) {
-        courseElement.style.color = "red"; // упал
-      } else {
-        courseElement.style.color = "black"; // без изменений
-      }
-    }
-
+    // Функция конвертации
     function convert() {
-      const ronAmount = document.getElementById('ronInput').value;
-      if (ronAmount === "" || isNaN(ronAmount)) {
-        alert("Введите корректное число!");
-        return;
+      const ronbucks = document.getElementById('ronbucks').value;
+      if (ronbucks && currentRate) {
+        const dollars = ronbucks * currentRate;
+        document.getElementById('result').innerText = `${ronbucks} Рон-баксов = ${dollars.toLocaleString()} долларов`;
+      } else {
+        document.getElementById('result').innerText = 'Введите количество Рон-баксов!';
       }
-      const dollars = ronAmount * rate;
-      document.getElementById('result').innerText = `${ronAmount} Рон-Баксов = ${dollars.toLocaleString()} USD`;
     }
-
-    function updateHistoryList() {
-      const historyList = document.getElementById('historyList');
-      historyList.innerHTML = "";
-
-      rateHistory.forEach((r, index) => {
-        const li = document.createElement('li');
-        li.innerText = `${index + 1} мин назад: ${r} USD`;
-        historyList.appendChild(li);
-      });
-    }
-
-    function updateChart() {
-      const ctx = document.getElementById('historyChart').getContext('2d');
-      if (window.historyChart) {
-        window.historyChart.destroy();
-      }
-      window.historyChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: ["-4 мин", "-3 мин", "-2 мин", "-1 мин", "Сейчас"],
-          datasets: [{
-            label: 'Курс',
-            data: rateHistory,
-            borderColor: 'blue',
-            backgroundColor: 'lightblue',
-            fill: true,
-            tension: 0.4
-          }]
-        },
-        options: {
-          responsive: false,
-          scales: {
-            y: {
-              beginAtZero: false
-            }
-          }
-        }
-      });
-    }
-
-    function fullUpdate() {
-      updateRate();
-      showRate();
-      updateHistoryList();
-      updateChart();
-      document.getElementById('result').innerText = "";
-    }
-
-    // При первой загрузке
-    showRate();
-    updateHistoryList();
-    updateChart();
-
-    // Обновляем каждую минуту
-    setInterval(fullUpdate, 60000); // 60 секунд
   </script>
 
 </body>
