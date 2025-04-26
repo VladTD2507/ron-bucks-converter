@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
-import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-database.js";
+import { getDatabase, ref, set, onValue, get } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-database.js";
 
-// Твои настройки Firebase
+// Настройки Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyCpjGgyQu_0YeK8bp93MwurF8na4WuSg-E",
   authDomain: "ron-bucks-converter.firebaseapp.com",
@@ -18,48 +18,75 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 let currentRate = 1488; // Стартовый курс
-let rateLoaded = false; // Флаг загрузки курса
 
+// Получаем курс из базы данных
 const rateRef = ref(db, 'rate');
 
-// Загружаем текущий курс из базы
 get(rateRef).then((snapshot) => {
   if (snapshot.exists()) {
     currentRate = snapshot.val();
     console.log(`[${new Date().toLocaleTimeString()}] Курс загружен: ${currentRate}`);
   } else {
     set(rateRef, currentRate);
-    console.log(`[${new Date().toLocaleTimeString()}] Установлен стартовый курс: ${currentRate}`);
+    console.log(`[${new Date().toLocaleTimeString()}] Курс установлен стартовый: ${currentRate}`);
   }
-  rateLoaded = true;
 });
 
-// Функция для обновления курса
-function updateRate() {
-  if (!rateLoaded) {
-    console.log('Курс ещё не загружен. Пропуск обновления.');
-    return;
-  }
+// Обновление курса на странице
+function updateRateDisplay(newRate, oldRate) {
+  const rateElement = document.getElementById('rate');
+  rateElement.innerText = `Текущий курс: 1 Рон-бакс = ${newRate} долларов`;
 
-  const increaseChance = Math.random(); // шанс увеличить курс
-  const maxChange = currentRate * 0.05; // максимум 5% изменения
-  const changeAmount = Math.floor(Math.random() * maxChange);
-
-  if (increaseChance < 0.7) {
-    currentRate += changeAmount; // 70% шанс поднятия курса
+  // Анимация и цвет:
+  if (newRate > oldRate) {
+    rateElement.style.color = "green"; // курс вырос
+  } else if (newRate < oldRate) {
+    rateElement.style.color = "red"; // курс упал
   } else {
-    currentRate -= changeAmount; // 30% шанс понижения курса
+    rateElement.style.color = "black"; // если курс не изменился
+  }
+}
+
+// Обновляем курс
+function updateRate() {
+  const chance = Math.random(); // случайное число от 0 до 1
+  let changePercent = Math.random() * 0.15; // максимум 15% изменения курса
+
+  const oldRate = currentRate;
+
+  if (chance < 0.7) {
+    // 70% шанс увеличить курс
+    const increaseAmount = Math.floor(currentRate * changePercent);
+    currentRate += increaseAmount;
+    console.log(`[${new Date().toLocaleTimeString()}] Курс увеличился на +${increaseAmount} → ${currentRate}`);
+  } else {
+    // 30% шанс уменьшить курс
+    const decreaseAmount = Math.floor(currentRate * changePercent * 0.5); // уменьшение слабее
+    currentRate -= decreaseAmount;
+    console.log(`[${new Date().toLocaleTimeString()}] Курс уменьшился на -${decreaseAmount} → ${currentRate}`);
   }
 
+  // Ограничение курса
   if (currentRate < 100) currentRate = 100;
   if (currentRate > 100000) currentRate = 100000;
 
+  // Сохраняем новый курс в Firebase
   set(rateRef, currentRate);
 
-  console.log(`[${new Date().toLocaleTimeString()}] Новый курс: ${currentRate}`);
+  // Обновляем отображение курса
+  updateRateDisplay(currentRate, oldRate);
 }
 
-// Старт обновления курса каждые 10 секунд
-setInterval(() => {
-  updateRate();
-}, 10000); // 10000 мс = 10 секунд
+// Запускаем обновление курса каждые 10 секунд
+setInterval(updateRate, 10000); // каждые 10 секунд
+
+// Конвертация
+window.convert = function convert() {
+  const ronbucks = document.getElementById('ronbucks').value;
+  if (ronbucks && currentRate) {
+    const dollars = ronbucks * currentRate;
+    document.getElementById('result').innerText = `${ronbucks} Рон-баксов = ${dollars.toLocaleString()} долларов`;
+  } else {
+    document.getElementById('result').innerText = 'Введите количество Рон-баксов!';
+  }
+};

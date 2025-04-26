@@ -18,6 +18,7 @@
     #rate {
       font-size: 24px;
       margin-bottom: 20px;
+      transition: color 0.3s ease; /* Плавное изменение цвета */
     }
     #result {
       font-size: 22px;
@@ -39,9 +40,9 @@
   <!-- Firebase SDK -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
-    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-database.js";
+    import { getDatabase, ref, set, onValue, get } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-database.js";
 
-    // Твои настройки Firebase
+    // Настройки Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyCpjGgyQu_0YeK8bp93MwurF8na4WuSg-E",
       authDomain: "ron-bucks-converter.firebaseapp.com",
@@ -57,17 +58,71 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    let currentRate = 0; // сюда будет сохраняться курс
+    let currentRate = 1488; // Стартовый курс
 
-    // Слушаем изменения курса в реальном времени
+    // Получаем курс из базы данных
     const rateRef = ref(db, 'rate');
-    onValue(rateRef, (snapshot) => {
-      currentRate = snapshot.val();
-      document.getElementById('rate').innerText = `Текущий курс: 1 Рон-бакс = ${currentRate} долларов`;
+
+    get(rateRef).then((snapshot) => {
+      if (snapshot.exists()) {
+        currentRate = snapshot.val();
+        console.log(`[${new Date().toLocaleTimeString()}] Курс загружен: ${currentRate}`);
+      } else {
+        set(rateRef, currentRate);
+        console.log(`[${new Date().toLocaleTimeString()}] Курс установлен стартовый: ${currentRate}`);
+      }
     });
 
-    // Функция конвертации
-    function convert() {
+    // Обновление курса на странице
+    function updateRateDisplay(newRate, oldRate) {
+      const rateElement = document.getElementById('rate');
+      rateElement.innerText = `Текущий курс: 1 Рон-бакс = ${newRate} долларов`;
+
+      // Анимация и цвет:
+      if (newRate > oldRate) {
+        rateElement.style.color = "green"; // курс вырос
+      } else if (newRate < oldRate) {
+        rateElement.style.color = "red"; // курс упал
+      } else {
+        rateElement.style.color = "black"; // если курс не изменился
+      }
+    }
+
+    // Обновляем курс
+    function updateRate() {
+      const chance = Math.random(); // случайное число от 0 до 1
+      let changePercent = Math.random() * 0.15; // максимум 15% изменения курса
+
+      const oldRate = currentRate;
+
+      if (chance < 0.7) {
+        // 70% шанс увеличить курс
+        const increaseAmount = Math.floor(currentRate * changePercent);
+        currentRate += increaseAmount;
+        console.log(`[${new Date().toLocaleTimeString()}] Курс увеличился на +${increaseAmount} → ${currentRate}`);
+      } else {
+        // 30% шанс уменьшить курс
+        const decreaseAmount = Math.floor(currentRate * changePercent * 0.5); // уменьшение слабее
+        currentRate -= decreaseAmount;
+        console.log(`[${new Date().toLocaleTimeString()}] Курс уменьшился на -${decreaseAmount} → ${currentRate}`);
+      }
+
+      // Ограничение курса
+      if (currentRate < 100) currentRate = 100;
+      if (currentRate > 100000) currentRate = 100000;
+
+      // Сохраняем новый курс в Firebase
+      set(rateRef, currentRate);
+
+      // Обновляем отображение курса
+      updateRateDisplay(currentRate, oldRate);
+    }
+
+    // Запускаем обновление курса каждые 10 секунд
+    setInterval(updateRate, 10000); // каждые 10 секунд
+
+    // Конвертация
+    window.convert = function convert() {
       const ronbucks = document.getElementById('ronbucks').value;
       if (ronbucks && currentRate) {
         const dollars = ronbucks * currentRate;
@@ -75,11 +130,8 @@
       } else {
         document.getElementById('result').innerText = 'Введите количество Рон-баксов!';
       }
-    }
+    };
   </script>
-
-  <!-- Подключаем updateRate.js для фоновое обновление курса -->
-  <script type="module" src="updateRate.js"></script> <!-- Новый скрипт для обновления курса -->
 
 </body>
 </html>
