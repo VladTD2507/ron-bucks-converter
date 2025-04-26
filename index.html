@@ -75,6 +75,12 @@
       const rateText = document.getElementById('rate');
       rateText.innerText = `Текущий курс: 1 Рон-бакс = ${currentRate} долларов`;
 
+      // Удаляем старую стрелку, если она есть
+      const existingArrow = rateText.querySelector('span');
+      if (existingArrow) {
+        rateText.removeChild(existingArrow);
+      }
+
       // Добавляем стрелку вверх или вниз в зависимости от изменения курса
       const rateArrow = document.createElement('span');
       if (currentRate > lastRate) {
