@@ -28,12 +28,19 @@
 </head>
 <body>
 
-  <h1>Конвертер Рон-Баксов в Доллары</h1>
+  <h1>Конвертер Рон-Баксов и Долларов</h1>
 
   <div id="rate">Текущий курс: загружается...</div>
 
-  <input type="number" id="ronbucks" placeholder="Введите количество Рон-баксов">
-  <button onclick="convert()">Конвертировать</button>
+  <div>
+    <input type="number" id="ronbucks" placeholder="Рон-баксы">
+    <button onclick="convertRonbucksToDollars()">Рон-баксы → Доллары</button>
+  </div>
+
+  <div>
+    <input type="number" id="dollars" placeholder="Доллары">
+    <button onclick="convertDollarsToRonbucks()">Доллары → Рон-баксы</button>
+  </div>
 
   <div id="result"></div>
 
@@ -42,7 +49,6 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
     import { getDatabase, ref, set, onValue, get } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-database.js";
 
-    // Настройки Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyCpjGgyQu_0YeK8bp93MwurF8na4WuSg-E",
       authDomain: "ron-bucks-converter.firebaseapp.com",
@@ -57,10 +63,9 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    let currentRate = 1488; // Стартовый курс
+    let currentRate = 1488;
     const rateRef = ref(db, 'rate');
 
-    // Функция обновления отображения курса
     function updateRateDisplay(newRate, oldRate) {
       const rateElement = document.getElementById('rate');
       rateElement.innerText = `Текущий курс: 1 Рон-бакс = ${newRate} долларов`;
@@ -74,34 +79,32 @@
       }
     }
 
-    // Загружаем курс из базы данных
     get(rateRef).then((snapshot) => {
       if (snapshot.exists()) {
         currentRate = snapshot.val();
         console.log(`[${new Date().toLocaleTimeString()}] Курс загружен: ${currentRate}`);
-        updateRateDisplay(currentRate, currentRate); // ВАЖНО: сразу обновляем текст на экране
+        updateRateDisplay(currentRate, currentRate);
       } else {
         set(rateRef, currentRate);
-        console.log(`[${new Date().toLocaleTimeString()}] Курс установлен стартовый: ${currentRate}`);
-        updateRateDisplay(currentRate, currentRate); // И здесь тоже
+        console.log(`[${new Date().toLocaleTimeString()}] Стартовый курс установлен: ${currentRate}`);
+        updateRateDisplay(currentRate, currentRate);
       }
     });
 
-    // Функция обновления курса
     function updateRate() {
       const chance = Math.random();
-      let changePercent = Math.random() * 0.15; // до 15%
+      let changePercent = Math.random() * 0.15;
 
       const oldRate = currentRate;
 
       if (chance < 0.7) {
         const increaseAmount = Math.floor(currentRate * changePercent);
         currentRate += increaseAmount;
-        console.log(`[${new Date().toLocaleTimeString()}] Курс увеличился на +${increaseAmount} → ${currentRate}`);
+        console.log(`[${new Date().toLocaleTimeString()}] Курс вырос на +${increaseAmount} → ${currentRate}`);
       } else {
         const decreaseAmount = Math.floor(currentRate * changePercent * 0.5);
         currentRate -= decreaseAmount;
-        console.log(`[${new Date().toLocaleTimeString()}] Курс уменьшился на -${decreaseAmount} → ${currentRate}`);
+        console.log(`[${new Date().toLocaleTimeString()}] Курс упал на -${decreaseAmount} → ${currentRate}`);
       }
 
       if (currentRate < 100) currentRate = 100;
@@ -111,17 +114,27 @@
       updateRateDisplay(currentRate, oldRate);
     }
 
-    // Обновляем курс каждые 10 секунд
     setInterval(updateRate, 10000);
 
-    // Конвертация
-    window.convert = function convert() {
+    // Конвертация Рон-баксы → Доллары
+    window.convertRonbucksToDollars = function () {
       const ronbucks = document.getElementById('ronbucks').value;
       if (ronbucks && currentRate) {
         const dollars = ronbucks * currentRate;
         document.getElementById('result').innerText = `${ronbucks} Рон-баксов = ${dollars.toLocaleString()} долларов`;
       } else {
         document.getElementById('result').innerText = 'Введите количество Рон-баксов!';
+      }
+    };
+
+    // Конвертация Доллары → Рон-баксы
+    window.convertDollarsToRonbucks = function () {
+      const dollars = document.getElementById('dollars').value;
+      if (dollars && currentRate) {
+        const ronbucks = dollars / currentRate;
+        document.getElementById('result').innerText = `${dollars} долларов = ${ronbucks.toFixed(2)} Рон-баксов`;
+      } else {
+        document.getElementById('result').innerText = 'Введите количество долларов!';
       }
     };
   </script>
