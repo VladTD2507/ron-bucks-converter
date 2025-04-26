@@ -9,6 +9,7 @@
       font-family: Arial, sans-serif;
       text-align: center;
       padding: 20px;
+      display: none; /* Скрыть всё до ввода пароля */
     }
     input, button {
       padding: 10px;
@@ -18,7 +19,7 @@
     #rate {
       font-size: 24px;
       margin-bottom: 20px;
-      transition: color 0.3s ease; /* Плавное изменение цвета */
+      transition: color 0.3s ease;
     }
     #result {
       font-size: 22px;
@@ -32,7 +33,6 @@
 
   <div id="rate">Текущий курс: загружается...</div>
 
-  <!-- Кнопка для сброса курса -->
   <button onclick="resetCourse()">Сбросить курс до 1488</button>
 
   <div id="result"></div>
@@ -42,65 +42,69 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
     import { getDatabase, ref, set, onValue, get } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-database.js";
 
-    // Настройки Firebase
-    const firebaseConfig = {
-      apiKey: "AIzaSyCpjGgyQu_0YeK8bp93MwurF8na4WuSg-E",
-      authDomain: "ron-bucks-converter.firebaseapp.com",
-      databaseURL: "https://ron-bucks-converter-default-rtdb.europe-west1.firebasedatabase.app",
-      projectId: "ron-bucks-converter",
-      storageBucket: "ron-bucks-converter.firebasestorage.app",
-      messagingSenderId: "833359153928",
-      appId: "1:833359153928:web:ca68420138bdd556453abd",
-      measurementId: "G-2MBE7ELRLC"
-    };
+    // Проверка пароля перед загрузкой данных
+    const password = prompt("Введите пароль для входа в админ-панель:");
+    if (password !== "ronmaster1488") {
+      alert("Неверный пароль! Возврат на главную страницу.");
+      window.location.href = "index.html";
+    } else {
+      document.body.style.display = "block"; // Показываем тело страницы
 
-    // Инициализация Firebase
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
+      // Настройки Firebase
+      const firebaseConfig = {
+        apiKey: "AIzaSyCpjGgyQu_0YeK8bp93MwurF8na4WuSg-E",
+        authDomain: "ron-bucks-converter.firebaseapp.com",
+        databaseURL: "https://ron-bucks-converter-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "ron-bucks-converter",
+        storageBucket: "ron-bucks-converter.firebasestorage.app",
+        messagingSenderId: "833359153928",
+        appId: "1:833359153928:web:ca68420138bdd556453abd",
+        measurementId: "G-2MBE7ELRLC"
+      };
 
-    let currentRate = 1488; // Стартовый курс
+      const app = initializeApp(firebaseConfig);
+      const db = getDatabase(app);
 
-    // Получаем курс из базы данных
-    const rateRef = ref(db, 'rate');
+      let currentRate = 1488;
 
-    get(rateRef).then((snapshot) => {
-      if (snapshot.exists()) {
-        currentRate = snapshot.val();
-        console.log(`[${new Date().toLocaleTimeString()}] Курс загружен: ${currentRate}`);
-      } else {
+      const rateRef = ref(db, 'rate');
+
+      get(rateRef).then((snapshot) => {
+        if (snapshot.exists()) {
+          currentRate = snapshot.val();
+          console.log(`[${new Date().toLocaleTimeString()}] Курс загружен: ${currentRate}`);
+          updateRateDisplay(currentRate, currentRate);
+        } else {
+          set(rateRef, currentRate);
+          console.log(`[${new Date().toLocaleTimeString()}] Курс установлен стартовый: ${currentRate}`);
+          updateRateDisplay(currentRate, currentRate);
+        }
+      });
+
+      function updateRateDisplay(newRate, oldRate) {
+        const rateElement = document.getElementById('rate');
+        rateElement.innerText = `Текущий курс: 1 Рон-бакс = ${newRate} долларов`;
+
+        if (newRate > oldRate) {
+          rateElement.style.color = "green";
+        } else if (newRate < oldRate) {
+          rateElement.style.color = "red";
+        } else {
+          rateElement.style.color = "black";
+        }
+      }
+
+      function resetRate() {
+        currentRate = 1488;
         set(rateRef, currentRate);
-        console.log(`[${new Date().toLocaleTimeString()}] Курс установлен стартовый: ${currentRate}`);
+        updateRateDisplay(currentRate, currentRate);
+        console.log(`[${new Date().toLocaleTimeString()}] Курс сброшен до начального: ${currentRate}`);
       }
-    });
 
-    // Обновление курса на странице
-    function updateRateDisplay(newRate, oldRate) {
-      const rateElement = document.getElementById('rate');
-      rateElement.innerText = `Текущий курс: 1 Рон-бакс = ${newRate} долларов`;
-
-      // Анимация и цвет:
-      if (newRate > oldRate) {
-        rateElement.style.color = "green"; // курс вырос
-      } else if (newRate < oldRate) {
-        rateElement.style.color = "red"; // курс упал
-      } else {
-        rateElement.style.color = "black"; // если курс не изменился
-      }
+      window.resetCourse = function() {
+        resetRate();
+      };
     }
-
-    // Сброс курса до стартового значения
-    function resetRate() {
-      currentRate = 1488;
-      set(rateRef, currentRate); // Сохраняем в Firebase
-      updateRateDisplay(currentRate, currentRate); // Обновляем отображение на странице
-      console.log(`[${new Date().toLocaleTimeString()}] Курс сброшен до начального: ${currentRate}`);
-    }
-
-    // Функция для обработки нажатия кнопки "Сбросить курс"
-    window.resetCourse = function() {
-      resetRate();
-    };
-
   </script>
 
 </body>
