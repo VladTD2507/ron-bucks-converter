@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
-import { getDatabase, ref, set, onValue, get } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-database.js";
+import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-database.js";
 
 // Твои настройки Firebase
 const firebaseConfig = {
@@ -17,8 +17,8 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-let currentRate = 1488; // Начальный курс
-let rateLoaded = false; // Флаг что курс загружен
+let currentRate = 1488; // Стартовый курс
+let rateLoaded = false; // Флаг загрузки курса
 
 const rateRef = ref(db, 'rate');
 
@@ -26,29 +26,29 @@ const rateRef = ref(db, 'rate');
 get(rateRef).then((snapshot) => {
   if (snapshot.exists()) {
     currentRate = snapshot.val();
-    console.log(`Курс загружен: ${currentRate}`);
+    console.log(`[${new Date().toLocaleTimeString()}] Курс загружен: ${currentRate}`);
   } else {
     set(rateRef, currentRate);
-    console.log(`Установлен начальный курс: ${currentRate}`);
+    console.log(`[${new Date().toLocaleTimeString()}] Установлен стартовый курс: ${currentRate}`);
   }
-  rateLoaded = true; // Теперь можно менять курс
+  rateLoaded = true;
 });
 
-// Функция обновления курса
+// Функция для обновления курса
 function updateRate() {
   if (!rateLoaded) {
     console.log('Курс ещё не загружен. Пропуск обновления.');
     return;
   }
 
-  const increaseChance = Math.random();
-  const maxChange = currentRate * 0.15;
+  const increaseChance = Math.random(); // шанс увеличить курс
+  const maxChange = currentRate * 0.05; // максимум 5% изменения
   const changeAmount = Math.floor(Math.random() * maxChange);
 
   if (increaseChance < 0.7) {
-    currentRate += changeAmount;
+    currentRate += changeAmount; // 70% шанс поднятия курса
   } else {
-    currentRate -= changeAmount;
+    currentRate -= changeAmount; // 30% шанс понижения курса
   }
 
   if (currentRate < 100) currentRate = 100;
@@ -56,15 +56,10 @@ function updateRate() {
 
   set(rateRef, currentRate);
 
-  console.log(`Новый курс установлен: ${currentRate}`);
+  console.log(`[${new Date().toLocaleTimeString()}] Новый курс: ${currentRate}`);
 }
 
-// Стартуем обновление курса только после загрузки
-setTimeout(() => {
-  if (rateLoaded) {
-    updateRate();
-    setInterval(updateRate, 60000); // Каждую минуту
-  } else {
-    console.log('Курс ещё не загружен. Ждём.');
-  }
-}, 60000);
+// Старт обновления курса каждые 10 секунд
+setInterval(() => {
+  updateRate();
+}, 10000); // 10000 мс = 10 секунд
