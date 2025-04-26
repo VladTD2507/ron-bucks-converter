@@ -63,7 +63,7 @@ function updateRate() {
   updateRateDisplay(currentRate, oldRate);
 }
 
-setInterval(updateRate, 60000); // обновление раз в 60 сек
+setInterval(updateRate, 10000); // обновление раз в 60 сек
 
 window.convert = function() {
   const ronbucks = document.getElementById('ronbucks').value;
