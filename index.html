@@ -24,10 +24,6 @@
       font-size: 22px;
       margin-top: 20px;
     }
-    #countdown {
-      font-size: 18px;
-      margin-top: 20px;
-    }
   </style>
 </head>
 <body>
@@ -40,8 +36,6 @@
   <button onclick="convert()">Конвертировать</button>
 
   <div id="result"></div>
-
-  <div id="countdown">До обновления курса: 10 секунд</div>
 
   <!-- Firebase SDK -->
   <script type="module">
@@ -65,12 +59,21 @@
     const db = getDatabase(app);
 
     let currentRate = 1488; // Стартовый курс
-    let isRateLoaded = false; // Флаг, чтобы знать, когда курс загружен
 
     // Получаем курс из базы данных
     const rateRef = ref(db, 'rate');
 
-    // Функция для обновления курса на странице
+    get(rateRef).then((snapshot) => {
+      if (snapshot.exists()) {
+        currentRate = snapshot.val();
+        console.log(`[${new Date().toLocaleTimeString()}] Курс загружен: ${currentRate}`);
+      } else {
+        set(rateRef, currentRate);
+        console.log(`[${new Date().toLocaleTimeString()}] Курс установлен стартовый: ${currentRate}`);
+      }
+    });
+
+    // Обновление курса на странице
     function updateRateDisplay(newRate, oldRate) {
       const rateElement = document.getElementById('rate');
       rateElement.innerText = `Текущий курс: 1 Рон-бакс = ${newRate} долларов`;
@@ -113,50 +116,10 @@
 
       // Обновляем отображение курса
       updateRateDisplay(currentRate, oldRate);
-
-      // Обновляем таймер обратного отсчета
-      updateCountdown();
     }
 
-    let countdownTime = 10; // Начальное время до обновления
-
-    // Обновляем таймер обратного отсчета
-    function updateCountdown() {
-      const countdownElement = document.getElementById('countdown');
-      countdownElement.innerText = `До обновления курса: ${countdownTime} секунд`;
-
-      // Когда время заканчивается, обновляем курс
-      if (countdownTime === 0) {
-        updateRate(); // обновляем курс
-        countdownTime = 10; // сбрасываем таймер
-      } else {
-        countdownTime--; // уменьшаем время
-      }
-    }
-
-    // Запускаем таймер только после того, как курс загружен
-    function startTimer() {
-      if (isRateLoaded) {
-        setInterval(updateCountdown, 1000); // обновляем таймер каждую секунду
-      }
-    }
-
-    // Получаем курс из Firebase и начинаем отсчет только после загрузки
-    get(rateRef)
-      .then((snapshot) => {
-        if (snapshot.exists()) {
-          currentRate = snapshot.val();
-          console.log(`[${new Date().toLocaleTimeString()}] Курс загружен: ${currentRate}`);
-        } else {
-          console.log(`[${new Date().toLocaleTimeString()}] Курс не найден, устанавливаем начальный курс`);
-          set(rateRef, currentRate);
-        }
-        isRateLoaded = true; // Курс загружен
-        startTimer(); // Запускаем таймер только после загрузки курса
-      })
-      .catch((error) => {
-        console.error(`Ошибка при загрузке курса: ${error.message}`);
-      });
+    // Запускаем обновление курса каждые 10 секунд
+    setInterval(updateRate, 10000); // каждые 10 секунд
 
     // Конвертация
     window.convert = function convert() {
