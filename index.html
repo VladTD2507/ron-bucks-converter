@@ -24,25 +24,14 @@
       font-size: 22px;
       margin-top: 20px;
     }
-    .admin-button {
+    #adminLogin {
       margin-top: 30px;
-      padding: 10px 20px;
-      font-size: 18px;
-      background-color: #007bff;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: background-color 0.3s ease;
-    }
-    .admin-button:hover {
-      background-color: #0056b3;
     }
   </style>
 </head>
 <body>
 
-  <h1>Конвертер Рон-Баксов в Доллары</h1>
+  <h1>Конвертер Рон-Баксов</h1>
 
   <div id="rate">Текущий курс: загружается...</div>
 
@@ -51,20 +40,23 @@
 
   <div id="result"></div>
 
-  <!-- Кнопка входа в админ-панель -->
-  <button class="admin-button" onclick="location.href='admin.html'">Вход в админ панель</button>
+  <div id="adminLogin">
+    <h2>Вход в админ-панель</h2>
+    <input type="password" id="adminPassword" placeholder="Введите пароль">
+    <button onclick="loginAdmin()">Войти</button>
+  </div>
 
   <!-- Firebase SDK -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
-    import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-database.js";
+    import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCpjGgyQu_0YeK8bp93MwurF8na4WuSg-E",
       authDomain: "ron-bucks-converter.firebaseapp.com",
       databaseURL: "https://ron-bucks-converter-default-rtdb.europe-west1.firebasedatabase.app",
       projectId: "ron-bucks-converter",
-      storageBucket: "ron-bucks-converter.firebasestorage.app",
+      storageBucket: "ron-bucks-converter.appspot.com",
       messagingSenderId: "833359153928",
       appId: "1:833359153928:web:ca68420138bdd556453abd",
       measurementId: "G-2MBE7ELRLC"
@@ -74,7 +66,6 @@
     const db = getDatabase(app);
 
     let currentRate = 1488;
-
     const rateRef = ref(db, 'rate');
 
     get(rateRef).then((snapshot) => {
@@ -102,12 +93,12 @@
     }
 
     function updateRate() {
-      const changeAmount = Math.floor(Math.random() * 20) + 1;
+      const chance = Math.random();
+      let changeAmount = Math.floor(Math.random() * 20) + 1; // 1-20
+
       const oldRate = currentRate;
 
-      const chance = Math.random();
-
-      if (chance < 0.5) {
+      if (chance < 0.7) {
         currentRate += changeAmount;
         console.log(`[${new Date().toLocaleTimeString()}] Курс увеличился на +${changeAmount} → ${currentRate}`);
       } else {
@@ -119,19 +110,27 @@
       if (currentRate > 100000) currentRate = 100000;
 
       set(rateRef, currentRate);
-
       updateRateDisplay(currentRate, oldRate);
     }
 
-    setInterval(updateRate, 60000);
+    setInterval(updateRate, 60000); // обновление каждые 60 секунд
 
-    window.convert = function convert() {
+    window.convert = function() {
       const ronbucks = document.getElementById('ronbucks').value;
       if (ronbucks && currentRate) {
         const dollars = ronbucks * currentRate;
         document.getElementById('result').innerText = `${ronbucks} Рон-баксов = ${dollars.toLocaleString()} долларов`;
       } else {
         document.getElementById('result').innerText = 'Введите количество Рон-баксов!';
+      }
+    };
+
+    window.loginAdmin = function() {
+      const password = document.getElementById('adminPassword').value;
+      if (password === "1234") {
+        window.location.href = "admin.html"; // Переход на админку
+      } else {
+        alert("Неверный пароль!");
       }
     };
   </script>
