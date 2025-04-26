@@ -52,16 +52,16 @@ function updateRate() {
   const changeAmount = Math.floor(Math.random() * 20) + 1; // Случайное число от 1 до 20
   const oldRate = currentRate;
 
-  // 70% шанс увеличить курс, 30% шанс уменьшить
+  // 50% шанс увеличить курс и 50% шанс уменьшить
   const chance = Math.random();
 
-  if (chance < 0.7) {
-    // 70% шанс увеличить курс
+  if (chance < 0.5) {
+    // 50% шанс увеличить курс
     currentRate += changeAmount;
     console.log(`[${new Date().toLocaleTimeString()}] Курс увеличился на +${changeAmount} → ${currentRate}`);
   } else {
-    // 30% шанс уменьшить курс
-    currentRate -= Math.min(changeAmount, currentRate); // Не даем курсу упасть ниже 0
+    // 50% шанс уменьшить курс
+    currentRate -= changeAmount;
     console.log(`[${new Date().toLocaleTimeString()}] Курс уменьшился на -${changeAmount} → ${currentRate}`);
   }
 
