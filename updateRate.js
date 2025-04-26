@@ -36,8 +36,18 @@ get(rateRef).then((snapshot) => {
 
 // Функция для плавного изменения курса
 function updateRate() {
-  const change = Math.floor(Math.random() * 200) - 100; // от -100 до +100
-  currentRate += change;
+  const increaseChance = Math.random(); // случайное число от 0 до 1
+
+  const maxChange = currentRate * 0.15; // максимум 15% от текущего курса
+  const changeAmount = Math.floor(Math.random() * maxChange);
+
+  if (increaseChance < 0.7) {
+    // 70% шанс поднятия курса
+    currentRate += changeAmount;
+  } else {
+    // 30% шанс падения курса
+    currentRate -= changeAmount;
+  }
 
   if (currentRate < 100) currentRate = 100; // Минимальный курс
   if (currentRate > 100000) currentRate = 100000; // Максимальный курс
@@ -47,6 +57,7 @@ function updateRate() {
 
   console.log(`Новый курс установлен: ${currentRate}`);
 }
+
 
 // Используем setTimeout для обновления курса только через 1 минуту после загрузки страницы
 setTimeout(() => {
