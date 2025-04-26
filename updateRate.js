@@ -56,11 +56,11 @@ function updateRate() {
   const chance = Math.random();
 
   if (chance < 0.5) {
-    // 50% шанс увеличить курс
+    // 50% шанс увеличить курс на 1-20
     currentRate += changeAmount;
     console.log(`[${new Date().toLocaleTimeString()}] Курс увеличился на +${changeAmount} → ${currentRate}`);
   } else {
-    // 50% шанс уменьшить курс
+    // 50% шанс уменьшить курс на 1-20
     currentRate -= changeAmount;
     console.log(`[${new Date().toLocaleTimeString()}] Курс уменьшился на -${changeAmount} → ${currentRate}`);
   }
