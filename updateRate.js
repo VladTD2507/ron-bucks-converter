@@ -1,8 +1,8 @@
-// 1. Подключаем Firebase SDK
+// updateRate.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
-import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-database.js";
+import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-database.js";
 
-// 2. Твои настройки Firebase
+// Настройки Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyCpjGgyQu_0YeK8bp93MwurF8na4WuSg-E",
   authDomain: "ron-bucks-converter.firebaseapp.com",
@@ -14,47 +14,26 @@ const firebaseConfig = {
   measurementId: "G-2MBE7ELRLC"
 };
 
-// 3. Инициализация Firebase
+// Инициализация Firebase
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// 4. Получить текущий курс из базы
-async function getCurrentRate() {
+let currentRate = 1488; // Начальный курс
+
+// Функция плавного изменения курса
+function updateRate() {
+  const change = Math.floor(Math.random() * 200) - 100; // от -100 до +100
+  currentRate += change;
+
+  if (currentRate < 100) currentRate = 100;
+  if (currentRate > 100000) currentRate = 100000;
+
   const rateRef = ref(db, 'rate');
-  const snapshot = await get(rateRef);
-  if (snapshot.exists()) {
-    return snapshot.val();
-  } else {
-    return 500; // если вдруг курса нет — стартовый
-  }
+  set(rateRef, currentRate);
+
+  console.log(`Новый курс установлен: ${currentRate}`);
 }
 
-// 5. Установить новый курс в базу
-async function updateRate(newRate) {
-  const rateRef = ref(db, 'rate');
-  await set(rateRef, newRate);
-  console.log(`✅ Курс обновлен: ${newRate}`);
-}
-
-// 6. Генерация нового курса
-function getNewRate(oldRate) {
-  const minChange = 0.95; // максимум уменьшение на 5%
-  const maxChange = 1.05; // максимум увеличение на 5%
-  const randomMultiplier = Math.random() * (maxChange - minChange) + minChange;
-  let newRate = oldRate * randomMultiplier;
-  newRate = Math.max(100, Math.min(newRate, 100000)); // курс не выходит за пределы
-  return Math.round(newRate); // округляем до целого числа
-}
-
-// 7. Основная функция: обновление каждую минуту
-async function main() {
-  console.log("⏳ Запуск автообновления курса...");
-  setInterval(async () => {
-    const currentRate = await getCurrentRate();
-    const updatedRate = getNewRate(currentRate);
-    await updateRate(updatedRate);
-  }, 60000); // каждые 60 секунд
-}
-
-// 8. Запуск
-main();
+// Сразу обновляем и потом каждую минуту
+updateRate();
+setInterval(updateRate, 60000);
