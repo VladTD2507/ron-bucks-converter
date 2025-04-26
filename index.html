@@ -65,6 +65,7 @@
     const db = getDatabase(app);
 
     let currentRate = 1488; // Стартовый курс
+    let isRateLoaded = false; // Флаг, чтобы знать, когда курс загружен
 
     // Получаем курс из базы данных
     const rateRef = ref(db, 'rate');
@@ -77,6 +78,8 @@
         set(rateRef, currentRate);
         console.log(`[${new Date().toLocaleTimeString()}] Курс установлен стартовый: ${currentRate}`);
       }
+      isRateLoaded = true; // Курс загружен
+      startTimer(); // Запускаем таймер только после загрузки курса
     });
 
     // Обновление курса на странице
@@ -143,8 +146,12 @@
       }
     }
 
-    // Запускаем обновление курса каждые 10 секунд
-    setInterval(updateCountdown, 1000); // обновляем таймер каждую секунду
+    // Запускаем таймер только после того, как курс загружен
+    function startTimer() {
+      if (isRateLoaded) {
+        setInterval(updateCountdown, 1000); // обновляем таймер каждую секунду
+      }
+    }
 
     // Конвертация
     window.convert = function convert() {
