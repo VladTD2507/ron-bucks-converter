@@ -70,19 +70,7 @@
     // Получаем курс из базы данных
     const rateRef = ref(db, 'rate');
 
-    get(rateRef).then((snapshot) => {
-      if (snapshot.exists()) {
-        currentRate = snapshot.val();
-        console.log(`[${new Date().toLocaleTimeString()}] Курс загружен: ${currentRate}`);
-      } else {
-        set(rateRef, currentRate);
-        console.log(`[${new Date().toLocaleTimeString()}] Курс установлен стартовый: ${currentRate}`);
-      }
-      isRateLoaded = true; // Курс загружен
-      startTimer(); // Запускаем таймер только после загрузки курса
-    });
-
-    // Обновление курса на странице
+    // Функция для обновления курса на странице
     function updateRateDisplay(newRate, oldRate) {
       const rateElement = document.getElementById('rate');
       rateElement.innerText = `Текущий курс: 1 Рон-бакс = ${newRate} долларов`;
@@ -152,6 +140,19 @@
         setInterval(updateCountdown, 1000); // обновляем таймер каждую секунду
       }
     }
+
+    // Получаем курс из Firebase и начинаем отсчет только после загрузки
+    get(rateRef).then((snapshot) => {
+      if (snapshot.exists()) {
+        currentRate = snapshot.val();
+        console.log(`[${new Date().toLocaleTimeString()}] Курс загружен: ${currentRate}`);
+      } else {
+        set(rateRef, currentRate);
+        console.log(`[${new Date().toLocaleTimeString()}] Курс установлен стартовый: ${currentRate}`);
+      }
+      isRateLoaded = true; // Курс загружен
+      startTimer(); // Запускаем таймер только после загрузки курса
+    });
 
     // Конвертация
     window.convert = function convert() {
