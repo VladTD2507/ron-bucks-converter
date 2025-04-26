@@ -1,4 +1,3 @@
-// updateRate.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
 import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-database.js";
 
@@ -20,7 +19,7 @@ const db = getDatabase(app);
 
 let currentRate = 1488; // Начальный курс
 
-// Функция плавного изменения курса
+// Функция для плавного изменения курса
 function updateRate() {
   const change = Math.floor(Math.random() * 200) - 100; // от -100 до +100
   currentRate += change;
@@ -36,4 +35,4 @@ function updateRate() {
 
 // Сразу обновляем и потом каждую минуту
 updateRate();
-setInterval(updateRate, 60000);
+setInterval(updateRate, 60000); // 60000 мс = 1 минута
