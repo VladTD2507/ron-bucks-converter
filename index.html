@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Курс Рон-Баксов</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin-top: 50px;
+    }
+    input, button {
+      padding: 10px;
+      margin: 10px;
+      font-size: 16px;
+    }
+    .result {
+      margin-top: 20px;
+      font-size: 20px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Конвертер Рон-Баксов в Доллары</h1>
+
+  <div id="course"></div>
+
+  <input type="number" id="ronInput" placeholder="Введите количество Рон-Баксов">
+  <button onclick="convert()">Конвертировать</button>
+
+  <div class="result" id="result"></div>
+
+  <script>
+    function getCurrentRate() {
+      const now = new Date();
+      const minutes = now.getUTCMinutes();
+      const hours = now.getUTCHours();
+      const day = now.getUTCDate();
+      const seed = minutes + hours * 60 + day * 24 * 60;
+
+      // Создаем псевдослучайное число от 0 до 1
+      const randomValue = Math.abs(Math.sin(seed)) % 1;
+
+      // Масштабируем в диапазон от 100 до 100000
+      const rate = Math.floor(100 + randomValue * (100000 - 100));
+
+      return rate;
+    }
+
+    let rate = getCurrentRate();
+    document.getElementById('course').innerText = `Текущий курс: 1 Рон-Бакс = ${rate} USD`;
+
+    function convert() {
+      const ronAmount = document.getElementById('ronInput').value;
+      if (ronAmount === "" || isNaN(ronAmount)) {
+        alert("Введите корректное число!");
+        return;
+      }
+      const dollars = ronAmount * rate;
+      document.getElementById('result').innerText = `${ronAmount} Рон-Баксов = ${dollars.toLocaleString()} USD`;
+    }
+
+    // Обновляем курс каждую минуту
+    setInterval(() => {
+      rate = getCurrentRate();
+      document.getElementById('course').innerText = `Текущий курс: 1 Рон-Бакс = ${rate} USD`;
+      document.getElementById('result').innerText = ""; // Очищаем результат после смены курса
+    }, 60000); // 60 000 мс = 1 минута
+  </script>
+
+</body>
+</html>
