@@ -142,17 +142,21 @@
     }
 
     // Получаем курс из Firebase и начинаем отсчет только после загрузки
-    get(rateRef).then((snapshot) => {
-      if (snapshot.exists()) {
-        currentRate = snapshot.val();
-        console.log(`[${new Date().toLocaleTimeString()}] Курс загружен: ${currentRate}`);
-      } else {
-        set(rateRef, currentRate);
-        console.log(`[${new Date().toLocaleTimeString()}] Курс установлен стартовый: ${currentRate}`);
-      }
-      isRateLoaded = true; // Курс загружен
-      startTimer(); // Запускаем таймер только после загрузки курса
-    });
+    get(rateRef)
+      .then((snapshot) => {
+        if (snapshot.exists()) {
+          currentRate = snapshot.val();
+          console.log(`[${new Date().toLocaleTimeString()}] Курс загружен: ${currentRate}`);
+        } else {
+          console.log(`[${new Date().toLocaleTimeString()}] Курс не найден, устанавливаем начальный курс`);
+          set(rateRef, currentRate);
+        }
+        isRateLoaded = true; // Курс загружен
+        startTimer(); // Запускаем таймер только после загрузки курса
+      })
+      .catch((error) => {
+        console.error(`Ошибка при загрузке курса: ${error.message}`);
+      });
 
     // Конвертация
     window.convert = function convert() {
