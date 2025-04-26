@@ -7,8 +7,32 @@
 </head>
 <body>
   <h1>Админ-панель: обновление курса Рон-Баксов</h1>
-  <p>Эта страница автоматически обновляет курс каждые 60 секунд.</p>
 
-  <script type="module" src="updateRate.js"></script>
+  <div id="passwordForm">
+    <h2>Введите пароль для доступа:</h2>
+    <input type="password" id="password" placeholder="Введите пароль">
+    <button onclick="checkPassword()">Войти</button>
+  </div>
+
+  <div id="adminContent" style="display:none;">
+    <p>Эта страница автоматически обновляет курс каждые 60 секунд.</p>
+    <script type="module" src="updateRate.js"></script>
+  </div>
+
+  <script>
+    // Пароль, который ты будешь использовать
+    const correctPassword = "vat250712"; // Замени на свой
+
+    function checkPassword() {
+      const inputPassword = document.getElementById("password").value;
+
+      if (inputPassword === correctPassword) {
+        document.getElementById("passwordForm").style.display = "none";
+        document.getElementById("adminContent").style.display = "block";
+      } else {
+        alert("Неверный пароль! Попробуйте снова.");
+      }
+    }
+  </script>
 </body>
 </html>
