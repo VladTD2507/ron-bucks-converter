@@ -77,7 +77,7 @@ function updateRate() {
 }
 
 // Запускаем обновление курса каждые 60 секунд (60000 миллисекунд)
-setInterval(updateRate, 60000); // каждые 60 секунд
+setInterval(updateRate, 10000); // каждые 60 секунд
 
 // Конвертация
 window.convert = function convert() {
